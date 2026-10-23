@@ -1,0 +1,17 @@
+
+# Secrets
+.env
+.env.*
+!.env.example
+
+# Python environment and cache
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Local vector database
+qdrant_data/
+
+# Logs
+*.log
