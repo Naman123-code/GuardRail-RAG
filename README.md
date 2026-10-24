@@ -1,25 +1,25 @@
-# 🔐 GuardRail-RAG
+# GuardRail-RAG
 
 ### Permission-Aware, Multi-Tenant Retrieval-Augmented Generation
 
 GuardRail-RAG is a document question-answering application built with **FastAPI, PostgreSQL, Qdrant, Google Gemini, and Streamlit**. It combines semantic search with large language models to generate answers grounded in retrieved document context, while applying tenant and role filters during retrieval.
 
-The project explores how authentication, access control, vector search, and LLM-based generation can work together in a multi-tenant RAG system.
+This project explores how authentication, access control, vector search, and LLM-based generation can work together in a multi-tenant RAG system.
 
-## ✨ Features
+## Features
 
-- **Authentication:** User registration and login with Argon2 password hashing.
-- **JWT authorization:** Protect API endpoints using bearer tokens.
+- **User authentication:** Registration and login with Argon2 password hashing.
+- **JWT authentication:** Bearer tokens for protected API endpoints.
 - **Multi-tenant architecture:** Associate users and document chunks with tenants.
 - **Role-aware retrieval:** Filter document retrieval using tenant and role metadata.
 - **Semantic search:** Generate embeddings with Sentence Transformers and retrieve relevant chunks from Qdrant.
 - **LLM-powered answers:** Generate responses from retrieved context using Google Gemini.
-- **Source references:** Include document identifiers and page numbers in generated answers.
-- **Interactive UI:** Ask questions through a Streamlit web interface.
+- **Source references:** Include document identifiers and page numbers in the answer context.
+- **Interactive interface:** Ask questions through a Streamlit web interface.
 - **REST API:** FastAPI endpoints with interactive Swagger documentation.
-- **Automated testing:** Pytest tests for authentication and related functionality.
+- **Automated tests:** Pytest tests for authentication, authorization checks, and RAG endpoint behavior.
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 | Component | Technology |
 |---|---|
@@ -32,44 +32,38 @@ The project explores how authentication, access control, vector search, and LLM-
 | Vector database | Qdrant |
 | Embedding model | Sentence Transformers — `all-MiniLM-L6-v2` |
 | LLM | Google Gemini API |
-| Testing | Pytest, HTTPX |
+| Testing | Pytest, FastAPI TestClient |
 
-## 🏗️ Architecture
+## Architecture
 
 ```text
-                 ┌────────────────────┐
-                 │    Streamlit UI    │
-                 └─────────┬──────────┘
-                           │ HTTP + JWT
-                           ▼
-                 ┌────────────────────┐
-                 │      FastAPI       │
-                 │ Authentication     │
-                 │ Authorization      │
-                 └─────────┬──────────┘
-                           ▼
-                 ┌────────────────────┐
-                 │     RAG Service    │
-                 │ Query Embeddings   │
-                 │ Filtered Retrieval │
-                 │ Context Assembly   │
-                 │ Answer Generation  │
-                 └─────────┬──────────┘
-                           │
-                ┌──────────┴──────────┐
-                ▼                     ▼
-       ┌─────────────────┐   ┌─────────────────┐
-       │ Qdrant          │   │ Google Gemini   │
-       │ Vector Search   │   │ Answer Creation │
-       └─────────────────┘   └─────────────────┘
+                Streamlit UI
+                     |
+                  HTTP + JWT
+                     |
+                     v
+                  FastAPI
+             Authentication
+              Authorization
+                     |
+                     v
+                 RAG Service
+              Query Embeddings
+              Filtered Retrieval
+              Context Assembly
+              Answer Generation
+                     |
+            +--------+--------+
+            |                 |
+            v                 v
+          Qdrant           Gemini
+       Vector Search    Answer Generation
 
-                 ┌────────────────────┐
-                 │    PostgreSQL      │
-                 │ Users and Tenants  │
-                 └────────────────────┘
+               PostgreSQL
+             Users and Tenants
 ```
 
-## 🔄 How It Works
+## How It Works
 
 1. A user registers and logs in through the API.
 2. FastAPI verifies credentials and issues a JWT access token.
@@ -77,14 +71,14 @@ The project explores how authentication, access control, vector search, and LLM-
 4. FastAPI validates the token and obtains the user's tenant and role.
 5. The RAG service converts the question into an embedding.
 6. Qdrant retrieves relevant chunks using tenant and role filters.
-7. The retrieved context is passed to Gemini for answer generation.
-8. The response is returned to the UI with source references when provided.
+7. Retrieved context is passed to Gemini for answer generation.
+8. The answer is returned to the interface with source references when available.
 
-## 🚀 Getting Started
+## Getting Started
 
 ### Prerequisites
 
-- Python 3.11 or another Python version compatible with the dependencies
+- Python compatible with the pinned dependencies in `requirements.txt`
 - PostgreSQL
 - A Google Gemini API key
 - Git
@@ -96,7 +90,7 @@ git clone https://github.com/Naman123-code/GuardRail-RAG.git
 cd GuardRail-RAG
 ```
 
-### 2. Create a virtual environment
+### 2. Create and activate a virtual environment
 
 On Windows PowerShell:
 
@@ -113,42 +107,55 @@ python -m pip install -r requirements.txt
 
 ### 4. Configure environment variables
 
-Create a `.env` file in the project root. Use the variable names expected by your application:
+Create a `.env` file in the project root. Add the variables expected by the application:
 
 ```env
-DATABASE_URL=your_postgresql_connection_string
+DB_USER=your_postgresql_username
+DB_PASSWORD=your_postgresql_password
+DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=your_database_name
 GEMINI_API_KEY=your_gemini_api_key
 JWT_SECRET_KEY=your_long_random_secret
 ```
 
-Replace the placeholders with your local values. **Never commit your real `.env` file or expose API keys, passwords, or JWT secrets.**
+Replace the placeholders with your own local values. Use a strong, randomly generated JWT secret.
+
+**Never commit your real `.env` file, API keys, database passwords, or JWT secrets to GitHub.**
 
 ### 5. Set up PostgreSQL
 
-Create the database and initialize the tables using the project's database setup code. Ensure a tenant exists before registering users.
+1. Make sure the PostgreSQL server is running.
+2. Create the database specified by `DB_NAME`.
+3. Initialize the database tables using the project's database setup code.
+4. Ensure a tenant exists before registering users.
 
 ### 6. Start the FastAPI backend
 
+From the project root, run:
+
 ```powershell
-python -m uvicorn app.main:app
+python -m uvicorn app.main:app --reload
 ```
 
-Useful endpoints:
+Useful URLs:
 
-- Health check: `http://127.0.0.1:8000/health`
-- API documentation: `http://127.0.0.1:8000/docs`
+- Health check: http://127.0.0.1:8000/health
+- Interactive API documentation: http://127.0.0.1:8000/docs
 
-### 7. Start the Streamlit UI
+Keep this terminal running.
 
-Open a second terminal in the project root:
+### 7. Start the Streamlit interface
+
+Open a second terminal in the project root and activate the virtual environment if necessary. Then run:
 
 ```powershell
 python -m streamlit run app_ui.py
 ```
 
-The UI communicates with FastAPI. Authentication, retrieval, and answer generation remain in the backend.
+Streamlit communicates with FastAPI for authentication and question answering.
 
-## 🔌 API Endpoints
+## API Endpoints
 
 | Method | Endpoint | Description |
 |---|---|---|
@@ -161,45 +168,40 @@ The UI communicates with FastAPI. Authentication, retrieval, and answer generati
 | GET | `/admin-only` | Example admin-only endpoint |
 | POST | `/ask` | Ask a question about authorized documents |
 
-Protected endpoints require a valid bearer token.
+Protected endpoints require a valid bearer token where applicable. See `/docs` for the request and response schemas.
 
-## 🧪 Testing
+## Testing
 
-Run the authentication tests:
-
-```powershell
-python -m pytest tests/test_auth.py -v
-```
-
-Run all tests:
+Activate the project's virtual environment, navigate to the repository root, and run:
 
 ```powershell
-python -m pytest -v
+python -m pytest tests -v
 ```
 
-The authentication test suite passed seven tests during development. Run the tests on your own checkout to verify the current result.
+**Latest development result:** 9 tests passed.
 
-## 🔒 Security and Limitations
+The tests cover authentication, authorization checks, and aspects of the question-answering and retrieval workflow. Passing tests do not by themselves establish complete security against every possible cross-tenant data leak.
+
+## Security and Limitations
 
 - Passwords are hashed with Argon2.
-- JWTs are used to authenticate protected requests.
+- JWTs authenticate requests to protected endpoints.
 - Tenant and role metadata are used to filter vector retrieval.
-- The backend is responsible for enforcing authorization; the UI is not the security boundary.
-- Gemini responses may be unavailable due to API errors or rate limits.
-- Generated source references should be verified against the retrieved document chunks.
+- Authorization must be enforced by the backend, not just the UI.
+- Gemini may return errors or become temporarily unavailable due to service limits.
+- Generated source references should be checked against the retrieved document chunks.
+- This is a portfolio project and has not been independently audited or certified for production security.
 
-Tenant-access checks have been exercised during development, but comprehensive end-to-end cross-tenant leakage testing is still needed. This is a portfolio prototype, not a production-certified security system.
+## Future Improvements
 
-## 🛣️ Future Improvements
-
-- Comprehensive cross-tenant retrieval and leakage tests.
-- Validation of citations against retrieved chunks.
-- Audit logging for security-relevant operations.
-- More robust retries and timeouts for LLM requests.
-- Document management through the UI.
+- More comprehensive cross-tenant leakage tests.
+- Validation of generated citations against retrieved chunks.
+- Security audit logging.
+- More robust handling of LLM errors and timeouts.
+- Expanded document management.
 - Docker-based deployment and production configuration.
 
-## 👨‍💻 Author
+## Author
 
 **Naman Sharma**
 
