@@ -1,6 +1,14 @@
 from qdrant_client import QdrantClient, models
 from sentence_transformers import SentenceTransformer
 from app.document_processor import extract_text_from_pdf, chunk_text
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
+from qdrant_client import QdrantClient, models
+from sentence_transformers import SentenceTransformer
+from app.document_processor import extract_text_from_pdf, chunk_text
 
 client = QdrantClient(path="./qdrant_data")
 
